@@ -1,38 +1,62 @@
-// 🧪 COMANDO: hidetag
-// 👨‍🔬 Inspirado en Senku Ishigami — "¡La ciencia del silencio también tiene poder!" ⚗️
+import * as fs from 'fs';
 
 const handler = async (m, { conn, text, participants }) => {
   try {
-    const users = participants.map(u => u.id)
-    const quoted = m.quoted ? m.quoted : null
+    const users = participants.map(u => conn.decodeJid(u.id));
+    const quoted = m.quoted ? m.quoted : m;
+    const mime = (quoted.msg || quoted).mimetype || '';
+    const isMedia = /image|video|sticker|audio/.test(mime);
 
-    if (quoted) {
-      // 🔹 Reenvía el mensaje citado con mención oculta
-      await conn.sendMessage(m.chat, { 
-        forward: quoted, 
-        mentions: users 
-      }, { quoted: m })
-    } else if (text) {
-      // 🔹 Envía mensaje de texto con mención oculta
-      await conn.sendMessage(m.chat, { 
-        text: `🧬 *Transmisión silenciosa de Senku* ⚗️\n\n${text}`, 
-        mentions: users 
-      }, { quoted: m })
+    const finalText = (text || quoted?.text || '').trim();
+    const fullMessage = finalText + '\nㅤㅤㅤㅤㅤㅤㅤㅤ2023 EliteBotGlobal';
+
+    const options = {
+      mentions: users,
+      quoted: m
+    };
+
+    if (isMedia) {
+      const media = await quoted.download?.();
+      const caption = fullMessage;
+
+      if (quoted.mtype === 'imageMessage') {
+        await conn.sendMessage(m.chat, { image: media, caption, ...options });
+      } else if (quoted.mtype === 'videoMessage') {
+        await conn.sendMessage(m.chat, { video: media, caption, mimetype: 'video/mp4', ...options });
+      } else if (quoted.mtype === 'audioMessage') {
+        await conn.sendMessage(m.chat, { audio: media, mimetype: 'audio/mpeg', ptt: true, ...options });
+      } else if (quoted.mtype === 'stickerMessage') {
+        await conn.sendMessage(m.chat, { sticker: media, ...options });
+      }
     } else {
-      return m.reply(`⚠️ *Ecuación incompleta.*\nDebes responder a un mensaje o escribir algo.\n\nEjemplo:\n> .hidetag hola`)
+      await conn.sendMessage(m.chat, {
+        text: fullMessage,
+        mentions: users
+      }, { quoted: m });
     }
 
-    await m.react('🧪')
+    // Reacción al mensaje original del usuario
+    await conn.sendMessage(m.chat, {
+      react: {
+        text: '🗣️',
+        key: m.key
+      }
+    });
+
   } catch (e) {
-    console.error(e)
-    await m.reply('💥 Error al ejecutar la fórmula de mención oculta.')
+    console.error('Error en el comando hidetag:', e);
+    const usersFallback = participants.map(u => conn.decodeJid(u.id));
+    await conn.sendMessage(m.chat, {
+      text: (text || '') + '\nㅤㅤㅤㅤㅤㅤㅤㅤ2023 EliteBotGlobal',
+      mentions: usersFallback
+    }, { quoted: m });
   }
-}
+};
 
-handler.help = ['hidetag']
-handler.tags = ['grupo']
-handler.command = ['hidetag','n']
-handler.group = true
-handler.admin = true
+handler.help = ['hidetag'];
+handler.tags = ['group'];
+handler.command = /^(hidetag|notify|notificar|noti|n|avisos|aviso)$/i;
+handler.group = true;
+handler.admin = true;
 
-export default handler
+export default handler;
