@@ -256,3 +256,67 @@ for (const value of Object.values(global.ch)) {
 if (typeof value === 'string' && value.endsWith('@newsletter')) {
 await sock.newsletterFollow(value).catch(() => {})
 }}}
+
+// ===== FUNCIÓN DE REINICIO DE SUB-BOTS (INTEGRADA DEL SEGUNDO CÓDIGO) =====
+// Esta función verifica y reconecta todos los sub-bots automáticamente
+async function checkSubBots() {
+    // Determinar la carpeta donde se guardan los sub-bots
+    // En el primer código usa ./${jadi}/ pero jadi no está definido globalmente
+    // Por defecto usaremos "./jadibot/" que es común en muchos bots
+    const subBotDir = path.resolve("./jadibot/");
+    
+    if (!fs.existsSync(subBotDir)) return;
+    
+    const subBotFolders = fs.readdirSync(subBotDir).filter(folder => 
+        fs.statSync(path.join(subBotDir, folder)).isDirectory()
+    );
+
+    console.log(chalk.bold.cyanBright(`\nIniciando reinicio forzado de sub-bots...`));
+
+    // Primero desconectamos todos los sub-bots existentes
+    for (const conn of global.conns) {
+        if (conn && conn.ws) {
+            try {
+                console.log(chalk.bold.yellowBright(`\nDesconectando sub-bot (+${conn.user?.jid?.split('@')[0] || 'unknown'})...`));
+                conn.ws.close();
+                conn.ev.removeAllListeners();
+            } catch (e) {
+                console.error(chalk.redBright(`Error al desconectar sub-bot:`), e);
+            }
+        }
+    }
+    
+    // Limpiar el array global de conexiones
+    global.conns = [];
+
+    // Luego reconectamos todos los sub-bots
+    for (const folder of subBotFolders) {
+        const pathDuckJadiBot = path.join(subBotDir, folder);
+        const credsPath = path.join(pathDuckJadiBot, "creds.json");
+
+        if (!fs.existsSync(credsPath)) {
+            console.log(chalk.bold.yellowBright(`\nSub-bot (+${folder}) no tiene creds.json. Omitiendo...`));
+            continue;
+        }
+
+        try {
+            console.log(chalk.bold.greenBright(`\nReconectando sub-bot (+${folder})...`));
+            await duckJadiBot({
+                pathDuckJadiBot: pathDuckJadiBot,
+                m: null,
+                conn: global.conn, // Nota: global.conn debe estar definido en tu bot principal
+                args: [],
+                usedPrefix: '#',
+                command: 'qr', // Usamos 'qr' como comando por defecto
+                fromCommand: false
+            });
+            console.log(chalk.bold.greenBright(`\nSub-bot (+${folder}) reconectado exitosamente.`));
+        } catch (e) {
+            console.error(chalk.redBright(`Error al reconectar sub-bot (+${folder}):`), e);
+        }
+    }
+}
+
+// Configurar el intervalo para ejecutar la función de reinicio cada 10 minutos (600000 ms)
+// Puedes ajustar este valor según necesites
+setInterval(checkSubBots, 600000); // 10 minutos
