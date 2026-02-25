@@ -78,24 +78,4 @@ async function ajusteTiempo(ms) {
   if (segundos !== 0) resultado += segundos + " segundos";
 
   return resultado;
-}      m.chat,
-      {
-        text: message,
-        contextInfo: { mentionedJid: mentionList }
-      },
-      { quoted: fkontak }
-    )
-
-  } catch (err) {
-    console.error('Error en botlist:', err)
-    await conn.sendMessage(m.chat, {
-      text: `💥 Error en el laboratorio. Usa ${usedPrefix}report para informar.\n\nDetalle: ${err?.message || err}`
-    }, { quoted: m })
-  }
 }
-
-handler.tags = ["serbot"]
-handler.help = ["botlist"]
-handler.command = ["botlist", "listbots", "listbot", "bots", "sockets", "socket"]
-
-export default handler
