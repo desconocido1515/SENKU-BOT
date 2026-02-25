@@ -23,38 +23,57 @@ async function sendYTSearch(m, conn, query, usedPrefix) {
   if (!fkontak) fkontak = m
 
   const r = await ytSearch(query)
-  const videos = r.videos.slice(0, 5) // Limitar a 5 resultados
+  const videos = r.videos.slice(0, 5)
+
   if (!videos.length) {
     await conn.reply(m.chat, 'No se encontraron resultados', m)
     return true
   }
 
-  // Preparar media de cabecera (miniatura del primer video)
+  // Miniatura del primer video
   let mediaHeader = null
   try {
-    mediaHeader = await prepareWAMessageMedia({ image: { url: videos[0].thumbnail } }, { upload: conn.waUploadToServer })
+    mediaHeader = await prepareWAMessageMedia(
+      { image: { url: videos[0].thumbnail } },
+      { upload: conn.waUploadToServer }
+    )
   } catch {}
 
-  // Crear filas de lista interactiva
+  // 🔥 AQUÍ VA LA API BUENA
   const rows = videos.map(v => ({
     title: v.title,
     description: `Duración: ${v.timestamp} • Vistas: ${v.views}`,
-    id: `${usedPrefix}play2 ${v.url}`
+    id: `${usedPrefix}play2 https://api-adonix.ultraplus.click/download/ytvideo?apikey=Adofreekey&url=${encodeURIComponent(v.url)}`
   }))
 
   const interactiveMessage = {
     body: { text: `Resultados de búsqueda para: ${query}` },
     footer: { text: 'Selecciona un video para reproducir' },
-    header: { title: 'YouTube Search', hasMediaAttachment: !!mediaHeader?.imageMessage, imageMessage: mediaHeader?.imageMessage },
+    header: { 
+      title: 'YouTube Search',
+      hasMediaAttachment: !!mediaHeader?.imageMessage,
+      imageMessage: mediaHeader?.imageMessage
+    },
     nativeFlowMessage: {
       buttons: [
-        { name: 'single_select', buttonParamsJson: JSON.stringify({ title: 'Videos', sections: [ { title: 'Opciones', rows } ] }) }
+        {
+          name: 'single_select',
+          buttonParamsJson: JSON.stringify({
+            title: 'Videos',
+            sections: [{ title: 'Opciones', rows }]
+          })
+        }
       ],
       messageParamsJson: ''
     }
   }
 
-  const msg = generateWAMessageFromContent(m.chat, { viewOnceMessage: { message: { interactiveMessage } } }, { userJid: conn.user.jid, quoted: fkontak })
+  const msg = generateWAMessageFromContent(
+    m.chat,
+    { viewOnceMessage: { message: { interactiveMessage } } },
+    { userJid: conn.user.jid, quoted: fkontak }
+  )
+
   await conn.relayMessage(m.chat, msg.message, { messageId: msg.key.id })
   return true
 }
