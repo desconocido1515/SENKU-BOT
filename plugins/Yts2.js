@@ -2,7 +2,7 @@ import ytSearch from 'yt-search'
 import { prepareWAMessageMedia, generateWAMessageFromContent } from '@whiskeysockets/baileys'
 import fetch from 'node-fetch'
 
-// Función para generar contacto falso
+// Contacto falso
 async function makeFkontak() {
   try {
     const res = await fetch('https://i.postimg.cc/rFfVL8Ps/image.jpg')
@@ -17,7 +17,6 @@ async function makeFkontak() {
   }
 }
 
-// Función principal para enviar resultados de ytsearch
 async function sendYTSearch(m, conn, query, usedPrefix) {
   let fkontak = await makeFkontak()
   if (!fkontak) fkontak = m
@@ -30,7 +29,6 @@ async function sendYTSearch(m, conn, query, usedPrefix) {
     return true
   }
 
-  // Miniatura del primer video
   let mediaHeader = null
   try {
     mediaHeader = await prepareWAMessageMedia(
@@ -39,16 +37,16 @@ async function sendYTSearch(m, conn, query, usedPrefix) {
     )
   } catch {}
 
-  // 🔥 AQUÍ VA LA API BUENA
+  // ✅ AQUÍ USAMOS LA API BUENA
   const rows = videos.map(v => ({
     title: v.title,
     description: `Duración: ${v.timestamp} • Vistas: ${v.views}`,
-    id: `${usedPrefix}play2 https://api-adonix.ultraplus.click/download/ytvideo?apikey=Adofreekey&url=${encodeURIComponent(v.url)}`
+    id: `${usedPrefix}ytmp4 ${v.url}`   // 🔥 ESTE ES EL CAMBIO CLAVE
   }))
 
   const interactiveMessage = {
     body: { text: `Resultados de búsqueda para: ${query}` },
-    footer: { text: 'Selecciona un video para reproducir' },
+    footer: { text: 'Selecciona un video para descargar' },
     header: { 
       title: 'YouTube Search',
       hasMediaAttachment: !!mediaHeader?.imageMessage,
@@ -78,7 +76,6 @@ async function sendYTSearch(m, conn, query, usedPrefix) {
   return true
 }
 
-// Handler principal
 let handler = async (m, { conn, args, usedPrefix }) => {
   const query = args.join(' ')
   if (!query) return conn.reply(m.chat, `Usa: ${usedPrefix}ytsearch2 <consulta>`, m)
