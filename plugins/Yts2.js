@@ -2,7 +2,6 @@ import ytSearch from 'yt-search'
 import { prepareWAMessageMedia, generateWAMessageFromContent } from '@whiskeysockets/baileys'
 import fetch from 'node-fetch'
 
-// Contacto falso
 async function makeFkontak() {
   try {
     const res = await fetch('https://i.postimg.cc/rFfVL8Ps/image.jpg')
@@ -37,11 +36,11 @@ async function sendYTSearch(m, conn, query, usedPrefix) {
     )
   } catch {}
 
-  // ✅ AQUÍ USAMOS LA API BUENA
+  // ✅ ESTO ES LO IMPORTANTE
   const rows = videos.map(v => ({
     title: v.title,
     description: `Duración: ${v.timestamp} • Vistas: ${v.views}`,
-    id: `${usedPrefix}ytmp4 ${v.url}`   // 🔥 ESTE ES EL CAMBIO CLAVE
+    id: `${usedPrefix}play2 ${v.url}`   // 🔥 AQUÍ ESTÁ LA MAGIA
   }))
 
   const interactiveMessage = {
